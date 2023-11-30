@@ -2,6 +2,7 @@ package com.example.projbdexterne;
 
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -22,9 +23,9 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
 
     EditText nom, prenom, NCIN, NCE, classe;
-    Button ajouter, annuler;
+    Button ajouter, annuler, read ;
 
-    DatePicker date_naissance;
+  //  DatePicker date_naissance;
     ProgressDialog dialog;
 
     JSONParser parser = new JSONParser();
@@ -41,10 +42,11 @@ public class MainActivity extends AppCompatActivity {
         prenom = findViewById(R.id.prenom);
         NCIN = findViewById(R.id.ncin);
         NCE = findViewById(R.id.nce);
-        date_naissance = findViewById(R.id.DateN);
+//        date_naissance = findViewById(R.id.DateN);
         classe = findViewById(R.id.classe);
         ajouter = findViewById(R.id.btn_ajouter);
         annuler = findViewById(R.id.btn_annuler);
+        read = findViewById(R.id.read_btn);
 
         ajouter.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -52,7 +54,17 @@ public class MainActivity extends AppCompatActivity {
                 executeAsyncTask();
             }
         });
+        read.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent( MainActivity.this, read_activity.class);
+                        startActivity(i);
+                    }
+                }
+        );
     }
+
 
     private void executeAsyncTask() {
         dialog = new ProgressDialog(MainActivity.this);
@@ -81,36 +93,45 @@ public class MainActivity extends AppCompatActivity {
         params.put("NCIN", NCIN.getText().toString());
         params.put("NCE", NCE.getText().toString());
 
-        // Get the selected date from the DatePicker
+        /*// Get the selected date from the DatePicker
         int day = date_naissance.getDayOfMonth();
         int month = date_naissance.getMonth() + 1; // Month is 0-based, so add 1
         int year = date_naissance.getYear();
-
         params.put("DateNais", year + "-" + month + "-" + day);
+        */
         params.put("classe", classe.getText().toString());
 
-        JSONObject object = parser.makeHttpRequest("http://192.168.0.3/AndroidProject/api/add_etudiant.php", "POST", params);
+        JSONObject object = parser.makeHttpRequest("http://10.0.2.2/AndroidProject/api/add_etudiant.php", "POST", params);
 
         try {
             if (object != null) {
-                if (object.has("NCIN") && object.has("NCE") && object.has("Nom") && object.has("Prenom") && object.has("DateNais") && object.has("classe")) {
-                    // Check if the response contains the expected fields
-                    Log.d("Server Response", "NCIN: " + object.getString("NCIN"));
-                    Log.d("Server Response", "NCE: " + object.getString("NCE"));
-                    Log.d("Server Response", "Nom: " + object.getString("Nom"));
-                    Log.d("Server Response", "Prenom: " + object.getString("Prenom"));
-                    Log.d("Server Response", "DateNais: " + object.getString("DateNais"));
-                    Log.d("Server Response", "classe: " + object.getString("classe"));
+                // Check if the response contains the expected fields
+                if (object.has("success") && object.has("message")) {
+                    int success = object.getInt("success");
+                    String message = object.getString("message");
 
-                    if (object.has("success") && object.has("message")) {
-                        success = object.getInt("success");
-                        String message = object.getString("message");
+                    if (success == 1) {
+                        // The request was successful
                         Log.d("Server Response", "Success: " + success + ", Message: " + message);
+
+                        if (object.has("data")) {
+                            JSONObject data = object.getJSONObject("data");
+
+                            // Now you can access individual fields in the 'data' object
+                            Log.d("Server Response", "NCIN: " + data.getString("NCIN"));
+                            Log.d("Server Response", "NCE: " + data.getString("NCE"));
+                            Log.d("Server Response", "Nom: " + data.getString("Nom"));
+                            Log.d("Server Response", "Prenom: " + data.getString("Prenom"));
+                            Log.d("Server Response", "classe: " + data.getString("classe"));
+                        } else {
+                            Log.e("Server Response", "Missing 'data' field in the response");
+                        }
                     } else {
-                        Log.e("Server Response", "Invalid response format: " + object.toString());
+                        // The request failed
+                        Log.e("Server Response", "Error: " + message);
                     }
                 } else {
-                    Log.e("Server Response", "Missing fields in the response: " + object.toString());
+                    Log.e("Server Response", "Invalid response format: " + object.toString());
                 }
             } else {
                 Log.e("Server Response", "Null response from the server");
@@ -120,13 +141,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
     private void onPostExecute() {
         dialog.cancel();
 
         if (success == 1) {
             Toast.makeText(MainActivity.this, "Etudiant ajouté avec succès", Toast.LENGTH_LONG).show();
+            /*Intent i = new Intent( MainActivity.this, read_activity.class);
+            startActivity(i);*/
         } else {
             Toast.makeText(MainActivity.this, "Erreur lors de l'ajout", Toast.LENGTH_LONG).show();
         }

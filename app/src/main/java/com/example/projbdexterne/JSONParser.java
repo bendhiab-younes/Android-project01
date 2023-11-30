@@ -94,11 +94,11 @@ public class JSONParser {
 
         JSONObject jObj = null;
 
-// Try parsing the string to a JSON object
+        // Try parsing the string to a JSON object
         try {
             if (result.length() > 0) {
                 // Check for the specific string indicating an invalid response
-                if (!result.toString().equals("nullInvalid")) {
+                if (!result.toString().equals("Invalid data format")) {
                     jObj = new JSONObject(result.toString());
                 } else {
                     Log.e("JSON Parser", "Server response indicates an invalid result: " + result.toString());
@@ -110,8 +110,7 @@ public class JSONParser {
             Log.e("JSON Parser", "Error parsing data " + e.toString());
         }
 
-
         // Return JSON Object
         return jObj;
-    }
+}
 }
